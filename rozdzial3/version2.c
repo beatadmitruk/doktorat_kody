@@ -2,7 +2,7 @@
 #include<math.h>
 #include<mm_malloc.h>
 #include<omp.h>
-//#include<time.h>
+
 
 void version2(int n,int r, double a, double d, double *b, double *u){
 
@@ -10,7 +10,7 @@ void version2(int n,int r, double a, double d, double *b, double *u){
     const double r1=d-r2;
 
     double last1=-1/r2, last2=-r1;
-    u[0]=1./r2;//wyliczam pierwszy dla v prawa strona
+    u[0]=1./r2;
 
     int s=n/r;
 
@@ -19,8 +19,7 @@ void version2(int n,int r, double a, double d, double *b, double *u){
 
 #pragma omp parallel
 {
-    //dla v
-    //wzor (9):lewa strona
+
 #pragma omp for nowait schedule(static)
     for(int j=0;j<r;j++){
         double *col;
@@ -32,12 +31,11 @@ void version2(int n,int r, double a, double d, double *b, double *u){
         }
     }
 
-    //wzor (9):prawa strona u[0,s-1]
-    //wyliczam s-1 elementow
+
 #pragma omp single
 {
     for(int i=1;i<s;i++){
-        u[i]=u[i-1]*last1;//e_0=(1,0,...,0)
+        u[i]=u[i-1]*last1;
     }
 }
 
@@ -49,7 +47,6 @@ void version2(int n,int r, double a, double d, double *b, double *u){
     }
 }
 
-    //wzor (9):calosc strona
     for(int j=1;j<r;j++){
         double *col;
         __assume_aligned(col,64);
@@ -61,9 +58,8 @@ void version2(int n,int r, double a, double d, double *b, double *u){
         }
     }
 
- #pragma omp barrier
+#pragma omp barrier
 
-    //wzor (12):lewa strona
 #pragma omp for nowait schedule(static)
     for(int j=0;j<r;j++){
         double *col;
@@ -73,11 +69,8 @@ void version2(int n,int r, double a, double d, double *b, double *u){
             col[i]-=r1*col[i+1];
         }
     }
-    //wzor (12):prawa strona
 
-
-
- #pragma omp barrier
+#pragma omp barrier
 
 
 #pragma omp single
@@ -94,7 +87,7 @@ void version2(int n,int r, double a, double d, double *b, double *u){
     }
 }
 
-    //wzor (12):calosc
+
     for(int j=r-2;j>=0;j--){
         double *col;
         __assume_aligned(col,64);
@@ -105,26 +98,11 @@ void version2(int n,int r, double a, double d, double *b, double *u){
             col[i]-=last*es[i];
         }
     }
-    //mamy v (zapisane w b)
-
-
-
-
-    //to samo dla u
-    //wzor (9):lewa strona
-    //juz mamy w u[0,n-1]
-
-    //wzor (9):prawa strona
-    //taka sama jak dla v, korzystam z juz obliczonej(też w u[0,s-1]
-
-    //wzor (9):calosc
 
    #pragma omp single
     for(int j=1;j<r;j++){
       u[(j+1)*s-1]=-u[j*s-1]*u[s-1];
     }
-
-
 
     for(int j=1;j<r;j++){
         double *col;
@@ -140,7 +118,6 @@ void version2(int n,int r, double a, double d, double *b, double *u){
   #pragma omp barrier
 
 
-    //wzor (12):lewa strona
    #pragma omp for
     for(int j=0;j<r;j++){
         double *col;
@@ -151,8 +128,6 @@ void version2(int n,int r, double a, double d, double *b, double *u){
         }
     }
 
-    //wzor (12):prawa strona
-    //już obliczone w u[0,s]
 
   #pragma omp single
   {
@@ -162,10 +137,6 @@ void version2(int n,int r, double a, double d, double *b, double *u){
   }
 
 
-
-
-
-    //wzor (12):calosc
     for(int j=r-2;j>=0;j--){
         double *col;
         __assume_aligned(col,64);
@@ -180,7 +151,7 @@ void version2(int n,int r, double a, double d, double *b, double *u){
    #pragma omp barrier
 
 
-    //wzor (4) - dobrze
+
 #pragma omp single
 {
     b[0]/=(1+r1*u[0]);
@@ -195,27 +166,7 @@ void version2(int n,int r, double a, double d, double *b, double *u){
 }
 
 
-double test(int n,double d, double a,double *b){
-    double *res = malloc(sizeof(double)*n);
-    res[0]=1-(d*b[0]+a*b[1]);
-    for(int i=1;i<n-1;i++)
-        res[i]=1-(b[i-1]+d*b[i]+a*b[i+1]);
-    res[n-1]=1-(b[n-2]+d*b[n-1]);
-    double s=0;
-    for(int i=0;i<n;i++)
-        s+=res[i]*res[i];
-    s=sqrt(s);
-    free(res);
-    return s;
-}
 
-/*
-static void jmb_show_timestamp(char *s) {
-    static struct timespec timestamp;
-    clock_gettime(CLOCK_MONOTONIC_RAW, &timestamp);
-    printf("%s: %10ld.%09ld\n", s,timestamp.tv_sec, timestamp.tv_nsec);
-}
-*/
 
 int main(int argc, char **argv)
 {
@@ -231,11 +182,11 @@ int main(int argc, char **argv)
 
 
     double t0=omp_get_wtime();
-    //jmb_show_timestamp("start");
+
     version2(n,r,a,d,b,u);
-    //jmb_show_timestamp("stop");
+
     t0=omp_get_wtime()-t0;
-    printf("Residuum: %e\n", test(n,d,a,b));
+
     printf("Time: %.10lf",t0);
     _mm_free(b);
     _mm_free(u);

@@ -9,7 +9,6 @@
 
 #define NREP 500
 
-// permutowanie elementow tablicy zadana liczbe razy
 void shuff(int n, double *a, int nos)
 {
     srand(1233);
@@ -20,14 +19,13 @@ void shuff(int n, double *a, int nos)
         double tmp = a[k1];
         a[k1] = a[k2];
         a[k2] = tmp;
-        //    printf("%2d  %2d\n",k1,k2);
+
     }
 }
 
-// metoda 1 generowania elementow tablicy
+
 void genrand1(int n, double *a, int chun)
 {
-    // a[0] = 0.5;
     for (int i = 0; i < n; i++)
     {
         int ii = i % chun;
@@ -38,14 +36,14 @@ void genrand1(int n, double *a, int chun)
 }
 
 
-// suma elementow dla metody 1
+
 double okrand1(int n, int chun)
 {
     return ((double)(chun) / (chun + 1)) * (n / chun);
 }
 
 
-// sumowanie sekwencyjne
+
 double sumord(int n, double *a)
 {
 
@@ -70,7 +68,7 @@ double psumord(int n, double *a)
 }
 
 
-// sumowanie algorytmem Gilla-Mollera
+
 double sumgm(int n, double *a)
 {
     __assume_aligned(a, 64);
@@ -203,12 +201,7 @@ double pvsumgm(int n, double *a, double *s)
     #pragma omp parallel
     {
 
-/*
-    #pragma omp master
-    {
-    t1=omp_get_wtime();
-    }
-*/
+
 
     #pragma omp for  private(vx,vt,vs) reduction(vgmadd:vsold) schedule(static)
     for (int k = 0; k < n; k=k+8)
@@ -244,8 +237,7 @@ double pvsumgm(int n, double *a, double *s)
 
     t1=omp_get_wtime()-t1;
 
-//    *t+=(t2-t1);
-    //*t=fmin(*t,(t2-t1));
+
 
 
     *s= vs[0]+vp[0];

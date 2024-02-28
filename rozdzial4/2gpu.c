@@ -9,14 +9,10 @@
 #define NW BSIZE/VL
 
 
-/*double*/ void tridiagonal(int n,int r, int s, double t1, double t2, double t3,
+void tridiagonal(int n,int r, int s, double t1, double t2, double t3,
                             double *b, double *x, double normB, double *wsp){
 
-  // WE: b - prawa strona, x - tymczasowy wynik
-  // WY: b - wynik
 
-
-  // liczba kolumn mniejsza dwukrotnie
 
   r=r/2;
 
@@ -59,9 +55,7 @@
     const double r2=t2-t3*r1;
     double tmp=-t3/r2;
     double tmp2,e0s,es0;
-    //lz=b
-    //prawa strona
-    //
+
 
     // GPU: tworzymy robocze tablice
 
@@ -96,7 +90,7 @@
 
 
 
-    //lewa strona
+
 #pragma acc parallel present(x)
     {
       for(int i=1;i<s;i++){
@@ -242,7 +236,7 @@
 
 
 
-    //r alfa = z//lewa strona
+
 #pragma acc parallel  present(x)
     {
       for(int i=s-2;i>=0;i--){
@@ -267,7 +261,7 @@
 
 
     if(dn==1){
-      //pierwsze skladowe
+
 #pragma acc parallel num_gangs(1) present(x,wsp) deviceptr(u)
       {
         for(int j=r-2;j>=0;j--){
@@ -284,7 +278,6 @@
 
     }
 
-    //  printf("***** %d ****\n",dn);
 
 
 #pragma omp barrier
@@ -355,7 +348,6 @@
     }
 
 
-    // printf("***** %d ****\n",dn);
 
     int ii = (dn==0 ? 1: 0);
 
@@ -369,7 +361,7 @@
 
 
 
-    //powrót
+
 #pragma acc parallel  present(b,x) vector_length(BSIZE)
     {
       float xc[VL][BSIZE];
@@ -429,8 +421,8 @@ int main(int argc, char **argv){
   int s=n/r;//
   double *x;
   x=(double*)malloc(sizeof(double)*n);
-  //double l1=2,l2=13,l3=10, eps=pow(10,-10);
-  double t,t1/*,test*/;
+
+  double t,t1;
   double *b;
   b=(double*)malloc(sizeof(double)*n);
 
@@ -466,7 +458,7 @@ int main(int argc, char **argv){
     int k2 = k1+m;    // indeks koncowego elementu  przetwarzanego przez gpu (wylacznie)
 
 
-    //     printf("%d of %d: %d %d %d\n",dn,ndevs,m,k1,k2);
+
 #pragma omp barrier
 
 #pragma acc enter data create(x[0:m],b[0:m])
@@ -476,7 +468,6 @@ int main(int argc, char **argv){
     i1 = dn==0 ? 1 : n/2;
     i2 = dn==0 ? n/2-1 : n-2;
 
-    //      printf("%d: %d %d \n",dn,i1,i2);
 
 
 #pragma acc parallel loop independent present(x[0:m]) reduction(+:norm)
@@ -511,7 +502,7 @@ int main(int argc, char **argv){
 
 
   t=omp_get_wtime();
-  /*test=*/tridiagonal(n,r,s,l1,l2,l3,x,b,normB,wsp);
+  tridiagonal(n,r,s,l1,l2,l3,x,b,normB,wsp);
   t=omp_get_wtime()-t;
 
 

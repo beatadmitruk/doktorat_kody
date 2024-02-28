@@ -4,9 +4,7 @@
 
 #include "immintrin.h"
 #include <omp.h>
-//#include <openacc.h>
 
-// permutowanie elementow tablicy zadana liczbe razy
 void shuff(int n, float *a, int nos)
 {
     srand(123);
@@ -17,14 +15,14 @@ void shuff(int n, float *a, int nos)
         float tmp = a[k1];
         a[k1] = a[k2];
         a[k2] = tmp;
-        //    printf("%2d  %2d\n",k1,k2);
+
     }
 }
 
-// metoda 1 generowania elementow tablicy
+
 void genrand1(int n, float *a, int chun)
 {
-    // a[0] = 0.5;
+
     for (int i = 0; i < n; i++)
     {
         int ii = i % chun;
@@ -34,14 +32,13 @@ void genrand1(int n, float *a, int chun)
    shuff(n, a,  2*n);
 }
 
-// suma elementow dla metody 1
-double okrand1(int n, int chun)
+
+float okrand1(int n, int chun)
 {
     return ((double)(chun) / (double)(chun + 1)) * ((double)n / chun);
 }
 
-// sumowanie sekwencyjne
-double sumord(int n, float *a)
+float sumord(int n, float *a)
 {
     float s = 0;
 
@@ -53,8 +50,8 @@ double sumord(int n, float *a)
 }
 
 
-// sumowanie algorytmem Gilla-Mollera
-double msumgm(int n, float *a)
+
+float msumgm(int n, float *a)
 {
     float s = 0;
     double p = 0; // double
@@ -69,7 +66,7 @@ double msumgm(int n, float *a)
     return (s+p);
 }
 
-double sumgm(int n, float *a)
+float sumgm(int n, float *a)
 {
     float s = 0;
     float p = 0; // double
@@ -84,7 +81,7 @@ double sumgm(int n, float *a)
 }
 
 
-double vsumgm(int n, float *a)
+float vsumgm(int n, float *a)
 {
 
     __m512 vx,vs,vp,vsold,vt;
@@ -118,7 +115,7 @@ double vsumgm(int n, float *a)
 
 }
 
-double mvsumgm(int n, float *a)
+float mvsumgm(int n, float *a)
 {
 
     __m512 vx,vs,vsold,vt;
@@ -205,10 +202,7 @@ double mvsumgm(int n, float *a)
 
 
 
-double xokrand1(int n, int chun)
-{
-    return ((double)(chun) / (chun + 1)) * (n / chun);
-}
+
 struct GMSum
 {
   __m512 vs,vp;
@@ -247,10 +241,9 @@ void fpvsumgm(GMSum *vnew,GMSum *vold)
 
 
 
-double tpvgmsum(int n,float  *a)//,double *s, double *t)
+float tpvgmsum(int n,float  *a)
 {
 
-    //__assume_aligned(a, 64);
 
     __m512 vx,vs,vt,vp,old;
     __mmask16 mask = 0xFFFF;
@@ -260,24 +253,13 @@ double tpvgmsum(int n,float  *a)//,double *s, double *t)
     GMSum vsold;
 
     tempvzero(&vsold);
- //   vp = _mm512_setzero_ps();
- //   vs = _mm512_setzero_ps();
-//    vsold = _mm512_setzero_ps();
-    //double t1,t2;
 
-
-    //t1=omp_get_wtime();
 
 
     #pragma omp parallel
     {
 
-/*
-    #pragma omp master
-    {
-    t1=omp_get_wtime();
-    }
-*/
+
 
     #pragma omp for  private(vx,vt,vs) reduction(vgmadd:vsold) schedule(static)
     for (int k = 0; k < n; k=k+16)
@@ -293,10 +275,10 @@ double tpvgmsum(int n,float  *a)//,double *s, double *t)
     }
 
     vs = _mm512_add_ps(vsold.vs,vsold.vp);
-   // *s= _mm512_reduce_add_ps(vs);
+
     vp = _mm512_setzero_ps();
     old = _mm512_setzero_ps();
-    //tempvzero(&vsold);
+
 
     for(int k=16;k>1;k=k/2){
       __mmask16 b=k/2;
@@ -312,7 +294,7 @@ double tpvgmsum(int n,float  *a)//,double *s, double *t)
     }
 
 
-    //*t=omp_get_wtime()-t1;
+
 
     return  (double)vs[0]+(double)vp[0];
 
@@ -336,32 +318,21 @@ int main(int argc, char **argv)
 
 
 
-    /*
-    for (int i=0;i<n;i++)
-    {
-        printf("%2d %12.8f\n",(i+1),a[i]);
-    }
-*/
-
-
 
     t1=omp_get_wtime();
-    double suma= mvsumgm(n, a1);
+    float suma= mvsumgm(n, a1);
     t1=omp_get_wtime()-t1;
 
 
-   // t2=omp_get_wtime();
-   // double sgm = mvsumgm(n, a2);
-   // t2=omp_get_wtime()-t2;
 
 
    free(a1);
 
 
 
-    double ok = okrand1(n, c);
-    printf("%.30lf ", fabs(suma - ok) / fabs(ok) );
+    float ok = okrand1(n, c);
+    printf("%.30f ", fabs(suma - ok) / fabs(ok) );
 
-    printf("%.10lf",t1);
+    printf("%.10f",t1);
     return 0;
 }

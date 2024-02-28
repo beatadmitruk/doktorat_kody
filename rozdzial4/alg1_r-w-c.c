@@ -9,46 +9,6 @@
 #define NW BSIZE/VL
 
 
-// double test_format(int n, int r, double t1, double t2, double  t3, double *b,double *res, double normB){
-//     int s=n/r, index;
-//     double sum=0;
-// #pragma acc data copy(sum)
-//     {
-// #pragma acc parallel present(b,x) deviceptr(res) reduction(+:sum)
-//         {
-// #pragma acc loop independent
-//             for(int i=1;i<s-1;i++){
-// #pragma acc loop independent private(index)
-//                 for(int j=0;j<r;j++){
-//                     index=i*r+j;
-//                     res[index]=t1*x[index-r]+t2*x[index]+t3*x[index+r]-b[index];
-// 		    sum+=res[index]*res[index];
-//                 }
-//             }
-//         }
-//
-// #pragma acc parallel present(b,x) deviceptr(res) reduction(+:sum)
-// 	{
-// #pragma acc loop independent private(index)
-//             for(int i=1;i<r;i++){
-//                 index=n-r+i;
-//                 res[i]=t1*x[index-1]+t2*x[i]+t3*x[r+i]-b[i];
-//                 res[index-1]=t1*x[index-r-1]+t2*x[index-1]+t3*x[i]-b[index-1];
-//                 sum+=res[i]*res[i]+res[index-1]*res[index-1];
-//             }
-//
-// 	}
-// #pragma acc parallel num_gangs(1) present(b,x) deviceptr(res) reduction(+:sum)
-//         {
-//             res[0]=t2*x[0]+t3*x[r]-b[0];
-//             res[n-1]=t1*x[n-1-r]+t2*x[n-1]-b[n-1];
-//     	    sum+=res[0]*res[0]+res[n-1]*res[n-1];
-//         }
-//     }
-//
-//     return sqrt(sum)/normB;
-// }
-
 
 
 
@@ -64,18 +24,7 @@ void tridiagonal(int n,int r, int s, double t1, double t2, double t3, double *b)
     es=(double*)acc_malloc(sizeof(double)*s);
     double tmp=-t3/r2;
     double tmp2,e0s,es0;
-    //lz=b
-    //prawa strona
-    //
-/*
-#pragma acc parallel present(b,x)
-    {
-#pragma acc loop independent
-        for(int i=0;i<n;i++)
-            x[i]=b[i];
 
-    }*/
-//lewa strona
 #pragma acc parallel present(b)
     {
         for(int i=1;i<s;i++){
@@ -106,7 +55,7 @@ void tridiagonal(int n,int r, int s, double t1, double t2, double t3, double *b)
     }
 
 
-    //ostatnie skladowe
+
 #pragma acc parallel num_gangs(1) present(b)
     {
         for(int j=1;j<r;j++){
@@ -120,7 +69,7 @@ void tridiagonal(int n,int r, int s, double t1, double t2, double t3, double *b)
         }
     }
 
-    //calosc
+
 #pragma acc parallel deviceptr(u,e0)
     {
 #pragma acc loop independent
@@ -164,7 +113,7 @@ void tridiagonal(int n,int r, int s, double t1, double t2, double t3, double *b)
 
 
 
-    //r alfa = z//lewa strona
+
 #pragma acc parallel deviceptr(u) present(b)
     {
         for(int i=s-2;i>=0;i--){
@@ -177,9 +126,6 @@ void tridiagonal(int n,int r, int s, double t1, double t2, double t3, double *b)
     }
 
 
-
-
-    //pierwsze skladowe
 #pragma acc parallel num_gangs(1) present(b)
     {
         for(int j=r-2;j>=0;j--){
@@ -199,7 +145,7 @@ void tridiagonal(int n,int r, int s, double t1, double t2, double t3, double *b)
         b[0]=b[0]/(1+t3*r1*u[0]);
         tmp2=t3*r1*b[0];
     }
-    //calosc
+
 #pragma acc parallel deviceptr(es) present(b)
     {
 #pragma acc loop independent
@@ -226,7 +172,7 @@ void tridiagonal(int n,int r, int s, double t1, double t2, double t3, double *b)
     acc_free(u);
     acc_free(e0);
     acc_free(es);
-//mamy v i u
+
 #pragma acc parallel present(b) deviceptr(u)
     {
 #pragma acc loop  independent
@@ -234,58 +180,6 @@ void tridiagonal(int n,int r, int s, double t1, double t2, double t3, double *b)
             b[i]-=tmp2*u[i];
         }
     }
-//     double *res;
-//     res=(double*)acc_malloc(sizeof(double)*n);
-//
-//     int index;
-//     double sum=0;
-// #pragma acc data copy(sum)
-//     {
-// #pragma acc parallel present(b,x) deviceptr(res) reduction(+:sum)
-//         {
-// #pragma acc loop independent
-//             for(int i=1;i<s-1;i++){
-// #pragma acc loop independent private(index)
-//                 for(int j=0;j<r;j++){
-//                     index=i*r+j;
-//                     res[index]=t1*x[index-r]+t2*x[index]+t3*x[index+r]-b[index];
-//                     sum+=res[index]*res[index];
-//                 }
-//             }
-//         }
-//
-// #pragma acc parallel present(b,x) deviceptr(res) reduction(+:sum)
-//         {
-// #pragma acc loop independent private(index)
-//             for(int i=1;i<r;i++){
-//                 index=n-r+i;
-//                 res[i]=t1*x[index-1]+t2*x[i]+t3*x[r+i]-b[i];
-//                 res[index-1]=t1*x[index-r-1]+t2*x[index-1]+t3*x[i]-b[index-1];
-//                 sum+=res[i]*res[i]+res[index-1]*res[index-1];
-//             }
-//
-//         }
-// #pragma acc parallel num_gangs(1) present(b,x) deviceptr(res) reduction(+:sum)
-//         {
-//             res[0]=t2*x[0]+t3*x[r]-b[0];
-//             res[n-1]=t1*x[n-1-r]+t2*x[n-1]-b[n-1];
-//             sum+=res[0]*res[0]+res[n-1]*res[n-1];
-//         }
-//     }
-//     acc_free(res);
-//
-//     return sqrt(sum)/normB;
-
-
-
-/*
-#pragma acc data  present(b,x) deviceptr(u,res,e0,es)
-    {
-	double test_value=test_format(n,r,t1,t2,t3,x,b,res, normB);
-        printf("%.30lf ",test_value);
-    }
-
-*/
 
 
 }
@@ -304,7 +198,7 @@ int main(int argc, char **argv){
     int s=n/r;
     double *x;
     x=(double*)malloc(sizeof(double)*n);
-    //double l1=2,l2=13,l3=10, eps=pow(10,-10);
+
     double t;
     double *b;
     b=(double*)malloc(sizeof(double)*n);
@@ -358,7 +252,7 @@ double l1=-10, l2=11, l3=-1;
 {
     tridiagonal(n,r,s,l1,l2,l3,b);
 }
-    //powrót
+
   #pragma acc parallel  present(b,x) vector_length(BSIZE)
   {
   float xc[VL][BSIZE];
@@ -398,6 +292,6 @@ double l1=-10, l2=11, l3=-1;
 
     free(x);
     free(b);
-    //free(dx);
+
     return 0;
 }

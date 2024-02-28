@@ -8,7 +8,7 @@
 
 #define NREP 1
 
-// permutowanie elementow tablicy zadana liczbe razy
+
 void shuff(int n, float *a, int nos)
 {
     srand(1233);
@@ -19,11 +19,11 @@ void shuff(int n, float *a, int nos)
         float tmp = a[k1];
         a[k1] = a[k2];
         a[k2] = tmp;
-        //    printf("%2d  %2d\n",k1,k2);
+
     }
 }
 
-// metoda 1 generowania elementow tablicy
+
 void genrand1(int n, float *a, int chun)
 {
     // a[0] = 0.5;
@@ -36,50 +36,18 @@ void genrand1(int n, float *a, int chun)
     shuff(n, a,  2*n);
 }
 
-// metoda 1A generowania elementow tablicy
-void genrand1A(int n, float *a, int chun)
-{
 
 
 
-    for (int i = 0; i < n/2; i++)
-    {
-        int ii = i % chun;
-        float p = (ii + 1) * (ii + 2);
-        a[i] = 1.0f / p;
-    }
-
-    for (int i = n/2; i < n; i++)
-    {
-        int ii = i % chun;
-        float p = (ii + 1) * (ii + 2);
-        a[i] = -1.0f / p;
-    }
-
-    for (int i = 0; i < chun; i++)
-    {
-        a[i] = chun;
-    }
-
-    for (int i = n/2; i < n/2+chun; i++)
-    {
-        a[i] = chun;
-    }
 
 
-    shuff(n, a,  2*n);
-}
-
-
-// suma elementow dla metody 1
 float okrand1(int n, int chun)
 {
     return ((float)(chun) / (chun + 1)) * (n / chun);
 }
-double sumk(int n, float *a)
+float sumk(int n, float *a)
 {
 
-    //__assume_aligned(a, 64);
 
     float s = 0;
     float e = 0;
@@ -98,7 +66,7 @@ double sumk(int n, float *a)
 }
 
 
-// sumowanie rownoleglym algorytmem kompensacyjnym
+
 float vsumk(int n, float *a)
 {
 
@@ -124,7 +92,7 @@ float vsumk(int n, float *a)
       ve = _mm512_add_ps(vt,vy);
     }
 
-//    s = _mm512_reduce_add_pd(vs);
+
 
     for(int k=0;k<16;k++)
     {
@@ -138,26 +106,7 @@ float vsumk(int n, float *a)
     return s;
 
 
-/*
-    ve = _mm512_setzero_pd();
-    vs = _mm512_setzero_pd();
 
-    for(int k=8;k>1;k=k/2){
-      __mmask8 b=k/2;
-      cmask = mask >> b;
-      mask = mask - cmask;
-      vt = _mm512_maskz_mov_pd(cmask,vs);
-
-      vx    = _mm512_maskz_compress_pd(mask,vs);
-      vs = _mm512_add_pd(vsold,vx);
-      vt = _mm512_sub_pd(vs,vsold);
-      vt = _mm512_sub_pd(vx,vt);
-      vp = _mm512_add_pd(vp,vt);
-      mask=cmask;
-    }
-
-    return vs[0]+vp[0];
-*/
 
 
 }
@@ -166,7 +115,7 @@ void tempvkadd(__m512 *vnew,__m512 *vold)
 {
     __m512 vs,ve,vy,vt;
 
-//    ve = _mm512_setzero_pd();
+
 
     vt = *vold;
     vy = *vnew;
@@ -236,7 +185,7 @@ float pvsumk(int n, float *a, float *s)
       e=(temp-ss)+y;
     }
 
-//    printf(">>>>> %lf\n",ss);
+
 
     t1=omp_get_wtime()-t1;
 
@@ -269,10 +218,9 @@ int main(int argc, char **argv)
 
     t1=omp_get_wtime();
 
-//    for(int i=0;i<NREP;i++){
-//      suma = vsumk(n, a1);
+
         suma=sumk(n,a1);
-//    }
+
     t1=omp_get_wtime()-t1;
 
 
@@ -283,7 +231,7 @@ int main(int argc, char **argv)
 
 
     printf("%lf %e\n",t1,fabs(suma-ok)/fabs(ok));
-
+    free(a1);
 
    return 0;
 }

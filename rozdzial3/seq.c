@@ -30,11 +30,6 @@ void method0(int n, double a, double d, double *b, double *u){
 }
 
 
-static void jmb_show_timestamp(char *s) {
-    static struct timespec timestamp;
-    clock_gettime(CLOCK_MONOTONIC_RAW, &timestamp);
-    printf("%s: %10ld.%09ld \n", s,timestamp.tv_sec, timestamp.tv_nsec);
-}
 
 
 int main(int argc, char **argv){
@@ -46,9 +41,9 @@ int main(int argc, char **argv){
         double *u=_mm_malloc(sizeof(double)*n,64);
 
         double t=omp_get_wtime();
-        //jmb_show_timestamp("start");
+
         method0(n,a,d,b,u);
-        //jmb_show_timestamp("stop");
+
         printf("%.10lf",omp_get_wtime()-t);
         _mm_free(u);
         _mm_free(b);

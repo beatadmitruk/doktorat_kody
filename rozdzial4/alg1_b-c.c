@@ -10,7 +10,7 @@
 #define NC BSIZE/VL
 
 
-/*double*/ void tridiagonal(int n,int r, double t1, double t2, double t3, double *x){
+void tridiagonal(int n,int r, double t1, double t2, double t3, double *x){
     const double r1=(t2>0) ? (t2-sqrt(t2*t2-4*t1*t3))/(2*t3) : (t2+sqrt(t2*t2-4*t1*t3))/(2*t3);
     const double r2=t2-t3*r1;
     int s=n/r;
@@ -21,19 +21,7 @@
     u=(double*)acc_malloc((size_t)n*sizeof(double));
     double *es;
     es=(double*)acc_malloc((size_t)s*sizeof(double));
-    //double *e0;
-    //e0=(double*)acc_malloc((size_t)s*sizeof(double));
 
-/*
-#pragma acc parallel present(b,x)
-    {
-#pragma acc loop independent
-        for(int i=0;i<n;i++)
-            x[i]=b[i];
-    }
-*/
-//lz=b
-//lewa strona
 
 
 #pragma acc parallel present(x)
@@ -42,7 +30,7 @@
       double xc[VL+1][BSIZE];
 #pragma acc cache(xc)
 
-      // double *vxc=&xc[1][0];
+
 
          #pragma acc loop gang
       for(int j=0;j<r;j+=BSIZE){
@@ -59,8 +47,8 @@
 	             #pragma acc loop vector
 	    for(int i=0;i<BSIZE;i++){
 	      xc[i%VL+1][l+i/VL]=x[(j+l+i/VL)*s+k+i%VL];
-	    } // for i
-	  } // for l
+	    }
+	  }
 
 	         #pragma acc loop vector
 	  for(int j=0;j<BSIZE;j++){
@@ -73,22 +61,22 @@
 	             #pragma acc loop vector
 	    for(int i=0;i<BSIZE;i++){
 	      x[(j+l+i/VL)*s+k+i%VL]=xc[i%VL+1][l+i/VL];
-	    } // for i
-	  } // for l
+	    }
+	  }
 
 	         #pragma acc loop vector
 	  for(int kk=0;kk<BSIZE;kk++){
 	    xc[0][kk]=xc[VL][kk];
 	  }
 
-	} // for k
+	}
 
       }
 
     }
 
 
-//prawa strona
+
 #pragma acc parallel num_gangs(1) deviceptr(u)
 {
     u[0]=1;
@@ -111,11 +99,11 @@
 
 
 
-//ostatnie składowe
-#pragma acc parallel num_gangs(1) present(x) //deviceptr(u)
+
+#pragma acc parallel num_gangs(1) present(x)
 {
     for(int j=1;j<r;j++){
-       x[(j+1)*s-1]-=r1*x[j*s-1]*us;//u[s-1];
+       x[(j+1)*s-1]-=r1*x[j*s-1]*us;
     }
 }
 #pragma acc parallel num_gangs(1) deviceptr(u)
@@ -127,7 +115,7 @@
 
 
 
-//całość
+
 #pragma acc parallel present(x) deviceptr(u)
 {
 #pragma acc loop independent
@@ -152,8 +140,7 @@
 }
 
 
-//r alfa = z
-//lewa strona
+
 
 #pragma acc parallel present(x)
     {
@@ -161,7 +148,6 @@
       double xc[VL+1][BSIZE];
 #pragma acc cache(xc)
 
-      // double *vxc=&xc[1][0];
 
          #pragma acc loop gang
       for(int j=0;j<r;j+=BSIZE){
@@ -179,8 +165,8 @@
 	             #pragma acc loop vector
 	    for(int i=0;i<BSIZE;i++){
 	      xc[i%VL][l+i/VL]=x[(j+l+i/VL)*s+k+i%VL];
-	    } // for i
-	  } // for l
+	    }
+	  }
 
 
 
@@ -195,8 +181,8 @@
 	             #pragma acc loop vector
 	    for(int i=0;i<BSIZE;i++){
 	      x[(j+l+i/VL)*s+k+i%VL]=xc[i%VL][l+i/VL];
-	    } // for i
-	  } // for l
+	    }
+	  }
 
 	   #pragma acc loop vector
 	  for(int kk=0;kk<BSIZE;kk++){
@@ -204,7 +190,7 @@
 	  }
 
 
-	} // for k
+	}
 
       }
 
@@ -214,16 +200,14 @@
 
 
 
-//--------------------------------------------
 
-//pierwsze składowe
-#pragma acc parallel num_gangs(1) present(x)// deviceptr(es)
+#pragma acc parallel num_gangs(1) present(x)
 {
     for(int j=r-2;j>=0;j--){
        x[j*s]-=t3*x[(j+1)*s]*es0;
     }
 }
-//całość
+
 #pragma acc parallel present(x) deviceptr(es)
 {
 #pragma acc loop independent
@@ -234,8 +218,7 @@
             x[j*s+i]-=last2*es[i];
     }
 }
-//r beta = z
-//lewa strona
+
 
 
 #pragma acc parallel deviceptr(u)
@@ -244,7 +227,7 @@
       double uc[VL+1][BSIZE];
 #pragma acc cache(uc)
 
-      // double *vxc=&xc[1][0];
+
 
          #pragma acc loop gang
       for(int j=0;j<r;j+=BSIZE){
@@ -262,8 +245,8 @@
 	             #pragma acc loop vector
 	    for(int i=0;i<BSIZE;i++){
 	      uc[i%VL][l+i/VL]=u[(j+l+i/VL)*s+k+i%VL];
-	    } // for i
-	  } // for l
+	    }
+	  }
 
 
 
@@ -278,8 +261,8 @@
 	             #pragma acc loop vector
 	    for(int i=0;i<BSIZE;i++){
 	      u[(j+l+i/VL)*s+k+i%VL]=uc[i%VL][l+i/VL];
-	    } // for i
-	  } // for l
+	    }
+	  }
 
 	   #pragma acc loop vector
 	  for(int kk=0;kk<BSIZE;kk++){
@@ -287,7 +270,7 @@
 	  }
 
 
-	} // for k
+	}
 
       }
 
@@ -295,19 +278,13 @@
 
 
 
-
-
-
-//------------------------------------------------------
-
-//pierwsze składowe
 #pragma acc parallel num_gangs(1) deviceptr(u)
 {
     for(int j=r-2;j>=0;j--){
        u[j*s]-=t3*u[(j+1)*s]*es0;
     }
 }
-//całośc
+
 #pragma acc parallel deviceptr(es,u)
 {
 #pragma acc loop independent
@@ -319,9 +296,7 @@
     }
 }
     acc_free(es);
-    //acc_free(e0);
 
-//x
 #pragma acc parallel present(x[0:1]) deviceptr(u)
 {
     x[0]/=(1+t3*r1*u[0]);
@@ -335,40 +310,18 @@
     }
 }
     acc_free(u);
-/*
-    double *res = acc_malloc(sizeof(double)*n);
-    double sum=0;
-#pragma acc data copy(sum)
-{
-#pragma acc parallel present(b,x) deviceptr(res) reduction(+:sum)
-{
-#pragma acc loop independent
-    for(int i=1;i<n-1;i++){
-        res[i]=(t1*x[i-1]+t2*x[i]+t3*x[i+1]-b[i]);
-	sum+=res[i]*res[i];
-    }
-}
-#pragma acc parallel num_gangs(1) present(b,x)deviceptr(res) reduction(+:sum)
-{
-    res[0]=(t2*x[0]+t3*x[1]-b[0]);
-    res[n-1]=t1*x[n-2]+t2*x[n-1]-b[n-1];
-    sum+=res[0]*res[0]+res[n-1]*res[n-1];
-}
-}
-    acc_free(res);
-    return sqrt(sum)/normB;
-*/
+
 }
 
 float fx(int i,float h, float p, float q){
     return p*cos(i*h)+(q-1)*sin(i*h);
-    //return expf(i*h)*(1+p+q);
+
 }
 
 int main(int argc, char **argv){
     int n=atoi(argv[1]);
     int r=atoi(argv[2]);
-    //double t1=2,t2=10.1,t3=3;
+
     double *b=malloc(sizeof (double)*n);
     double *x=malloc(sizeof (double)*n);
     double t;
@@ -393,7 +346,7 @@ int main(int argc, char **argv){
 #pragma acc data present(b)
 {
     t=omp_get_wtime();
-    /*test=*/tridiagonal(n,r,l1,l2,l3,b);
+    tridiagonal(n,r,l1,l2,l3,b);
     t=omp_get_wtime()-t;
 }
 }
